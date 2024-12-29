@@ -1,35 +1,41 @@
-name: Deploy Node.js Application
+name: Deploy AWS Infrastructure with Terraform
 
 on:
   push:
     branches:
-      - main
+      - main  # Change to the branch you want to use (e.g., master, dev)
 
 jobs:
-  deploy:
+  terraform:
     runs-on: ubuntu-latest
-
+    
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      # Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Set up AWS CLI
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-west-1
+      # Set up Terraform
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0  # Specify the Terraform version you want to use
 
-    - name: Sync Node.js app files to S3 bucket
-      run: |
-        aws s3 sync ./build s3://mintukyadav010715 --delete
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      # Configure AWS credentials
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}   # Store your AWS Access Key ID in GitHub Secrets
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}   # Store your AWS Secret Access Key in GitHub Secrets
+          aws_region: us-west-1  # Specify the region you want to use
 
-    - name: Invalidate CloudFront cache
-      run: |
-        aws cloudfront create-invalidation --distribution-id YOUR_CLOUDFRONT_DISTRIBUTION_ID --paths "/*"
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      # Initialize Terraform
+      - name: Terraform Init
+        run: terraform init
+
+      # Validate Terraform configuration (optional but recommended)
+      - name: Terraform Validate
+        run: terraform validate
+
+      # Apply Terraform configuration to create AWS resources
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
