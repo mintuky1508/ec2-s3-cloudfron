@@ -4,34 +4,7 @@ provider "aws" {
 
 # S3 Bucket to store Node.js application files
 resource "aws_s3_bucket" "nodejs_app_bucket" {
-  bucket        = "mintukyadav010715"  # Your unique bucket name
-  force_destroy = true  # Force deletion of bucket and contents
-}
-
-# Enable versioning for the S3 bucket
-resource "aws_s3_bucket_versioning" "nodejs_app_versioning" {
-  bucket = aws_s3_bucket.nodejs_app_bucket.id
-  versioning_configuration {
-    status = "Enabled"
-  }
-}
-
-# Lifecycle configuration for the S3 bucket
-resource "aws_s3_bucket_lifecycle_configuration" "nodejs_app_lifecycle" {
-  bucket = aws_s3_bucket.nodejs_app_bucket.id
-
-  rule {
-    id     = "DeleteObjects"
-    status = "Enabled"
-
-    expiration {
-      expired_object_delete_marker = true
-    }
-
-    noncurrent_version_expiration {
-      days = 1
-    }
-  }
+  bucket = "mintukyadav010715"  # Your unique bucket name
 }
 
 # S3 Block Public Access settings (disable public access block)
@@ -41,7 +14,7 @@ resource "aws_s3_bucket_public_access_block" "nodejs_app_block" {
   block_public_policy     = false  # Allow public policy
 }
 
-# EC2 Instance to run Node.js application
+# EC2 Instance to run Node.js application (optional)
 resource "aws_instance" "nodejs_ec2" {
   ami           = "ami-0657605d763ac72a8"  # Use your desired AMI ID
   instance_type = "t2.micro"
@@ -89,7 +62,4 @@ resource "aws_cloudfront_distribution" "nodejs_cf" {
       restriction_type = "none"
     }
   }
-
-  # Ensure CloudFront depends on the S3 bucket
-  depends_on = [aws_s3_bucket.nodejs_app_bucket]
 }
